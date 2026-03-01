@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload to App Store using altool
         env:
-          IPA_PATH: "build/ios/ipa/Jinlv.ipa"
+          IPA_PATH: "build/ios/ipa/近旅.ipa"
           APPLE_ID: "abrishjabeen@icloud.com"
           APP_SPECIFIC_PASSWORD: "yiol-jfiz-icpg-yjtm"
         run: |
