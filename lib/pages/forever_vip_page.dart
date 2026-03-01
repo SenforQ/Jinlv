@@ -14,14 +14,16 @@ class ForeverVipPage extends StatefulWidget {
 
 class _ForeverVipPageState extends State<ForeverVipPage> {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
-  late StreamSubscription<List<PurchaseDetails>> _subscription;
+  StreamSubscription<List<PurchaseDetails>>? _subscription;
 
   ProductDetails? _product;
-  String _price = '¥29';
+  String _price = '¥29.9';
   bool _purchasePending = false;
+  bool _loading = true;
 
-  static const Set<String> _productIds = {'iOS_DIANMO_29'};
-  static const String _localPrice = '¥29';
+  // 使用与 coins_page 相同的产品 ID，确保 App Store Connect 中已配置
+  static const Set<String> _productIds = {'iOS_JINLV_29'};
+  static const String _localPrice = '¥29.9';
 
   @override
   void initState() {
@@ -31,17 +33,20 @@ class _ForeverVipPageState extends State<ForeverVipPage> {
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 
   Future<void> _initializeStore() async {
     final bool available = await _inAppPurchase.isAvailable();
-    if (!available) return;
+    if (!available) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
 
     _subscription = _inAppPurchase.purchaseStream.listen(
       _onPurchaseUpdate,
-      onDone: () => _subscription.cancel(),
+      onDone: () => _subscription?.cancel(),
       onError: (error) => debugPrint('购买流错误: $error'),
     );
 
@@ -57,14 +62,15 @@ class _ForeverVipPageState extends State<ForeverVipPage> {
           setState(() {
             _product = product;
             _price = product.price;
+            _loading = false;
           });
         }
       } else {
-        if (mounted) setState(() => _price = _localPrice);
+        if (mounted) setState(() { _price = _localPrice; _loading = false; });
       }
     } catch (e) {
       debugPrint('加载产品失败: $e');
-      if (mounted) setState(() => _price = _localPrice);
+      if (mounted) setState(() { _price = _localPrice; _loading = false; });
     }
   }
 
@@ -131,7 +137,8 @@ class _ForeverVipPageState extends State<ForeverVipPage> {
 
   Future<void> _onConfirm() async {
     if (_product != null) {
-      await _inAppPurchase.buyNonConsumable(
+      // 使用 buyConsumable 与 coins_page 一致，该产品在 App Store Connect 中为消耗型
+      await _inAppPurchase.buyConsumable(
         purchaseParam: PurchaseParam(productDetails: _product!),
       );
     } else {
@@ -207,7 +214,13 @@ class _ForeverVipPageState extends State<ForeverVipPage> {
           ),
           // 内容
           SafeArea(
-            child: SingleChildScrollView(
+            child: _loading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
+                    ),
+                  )
+                : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [

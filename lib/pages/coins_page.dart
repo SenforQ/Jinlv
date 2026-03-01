@@ -116,7 +116,7 @@ class _CoinsPageState extends State<CoinsPage> {
         isRealProduct: false,
       );
     }
-    if (mounted) setState(() => _loading = false);
+    // 不在此处设置 _loading = false，等 _loadProducts 完成后再显示
   }
 
   Future<void> _loadProducts() async {
